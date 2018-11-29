@@ -6,6 +6,8 @@ const { appBuild, appPackageJson, appPublic } = require("./paths");
 
 const { babel: babalLoaderQuery } = require(appPackageJson);
 
+babalLoaderQuery.plugins = ["react-hot-loader/babel"]
+
 module.exports = {
   entry: path.join(__dirname, "../server/entry.js"),
   output: {

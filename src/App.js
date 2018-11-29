@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, { Component } from "react";
+import { hot } from "react-hot-loader";
 // import logo from './logo.svg';
 // import './App.css';
 
@@ -10,7 +11,7 @@ class App extends Component {
           {/* <img src={logo} className="App-logo" alt="logo" /> */}
           <p>
             <input />
-            Edit1 <code>src123</code>
+            Edit1 <code>src133</code>
           </p>
           <a
             className="App-link"
@@ -26,4 +27,5 @@ class App extends Component {
   }
 }
 
-export default App;
+// export default App;
+export default hot(module)(App);
