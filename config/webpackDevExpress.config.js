@@ -1,5 +1,6 @@
-const WebpackNodeExternals = require("webpack-node-externals");
 const path = require("path");
+
+const webpack = require("webpack");
 
 const { appBuild, appPackageJson, appPublic } = require("./paths");
 
@@ -13,6 +14,7 @@ module.exports = {
     publicPath: appPublic,
     libraryTarget: "commonjs2"
   },
+  watch: true,
   module: {
     rules: [
       {
@@ -25,5 +27,12 @@ module.exports = {
   },
   target: "node",
   mode: "development",
-  externals: [WebpackNodeExternals()]
+  plugins: [new webpack.HotModuleReplacementPlugin()],
+  // node: {
+  //   fs: "empty",
+  //   net: "empty",
+  //   // 防止打包错乱
+  //   __filename: true,
+  //   __dirname: true
+  // }
 };

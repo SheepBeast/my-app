@@ -2,90 +2,67 @@ const path = require("path");
 const webpack = require("webpack");
 const MemoryFs = require("memory-fs");
 const proxy = require("http-proxy-middleware");
+const axios = require("axios");
 
 const webpackDevConfig = require("../config/webpack.config.dev");
 const webpackDevExpressConfig = require("../config/webpackDevExpress.config");
 const { ready } = require("./bind");
-const { initApp, initState } = require("./renderer");
+const render = require("./render");
 
-let p1, p2, r1, r2;
+const getTemplate = () => axios.get("http://localhost:3000/index.html");
 
-const render = res => {
-  let [html, bundle] = res;
-
-  const page = initApp(html, bundle);
-
-  console.log("page ------>", page);
-
-  // initState(indexHtmlStr, initialState)
-};
-
-const init = () => {
-  p1 = new Promise(resolve => {
-    r1 = resolve;
-  });
-  p2 = new Promise(resolve => {
-    r2 = resolve;
-  });
-  p = Promise.all([p1, p2]).then(render);
-};
+let bundle;
 
 module.exports = function setup(app) {
-  ready(({ compiler: clientCompiler, webpackDevServer }) => {
-    init();
+  const mfs = new MemoryFs();
 
-    const fs1 = webpackDevServer.middleware.fileSystem,
-      fs2 = new MemoryFs();
+  const serverCompiler = webpack(webpackDevExpressConfig);
 
-    let serverCompiler = webpack(webpackDevExpressConfig);
+  serverCompiler.outputFileSystem = mfs;
 
-    clientCompiler.hooks.done.tap("done", () => {
-      let url = path.join(webpackDevConfig.output.publicPath, "index.html");
-      let html = fs1.getFilenameFromUrl(url);
-      console.log("html --------->", html);
-      r1(html);
-    });
+  serverCompiler.watch({}, (err, stats) => {
+    console.log("stats ----->");
+    const info = stats.toJson();
 
-    serverCompiler.outputFileSystem = fs2;
+    if (stats.hasErrors()) {
+      info.warnings.forEach(console.warn);
+    }
 
-    serverCompiler.hooks.done.tap("done", stats => {
-      const info = stats.toJson();
+    if (stats.hasErrors()) {
+      info.errors.forEach(console.error);
+      process.exit(1);
+    }
 
-      if (stats.hasErrors()) {
-        info.warnings.forEach(console.warn);
-      }
-
-      if (stats.hasErrors()) {
-        info.errors.forEach(console.error);
-        process.exit(1);
-      }
-
-      const bundlePath = path.join(
-        webpackDevExpressConfig.output.path,
-        webpackDevExpressConfig.output.filename
-      );
-
-      let bundle = fs2.readFileSync(bundlePath, "utf8");
-
-      let m = new module.constructor();
-
-      m._compile(bundle, webpackDevExpressConfig.output.filename);
-
-      bundle = m.exports.default;
-
-      console.log("bundle --------->", bundle);
-
-      r2(bundle);
-
-      setTimeout(init, 1000);
-    });
-
-    const [_, host, port] = webpackDevServer.listeningApp._connectionKey.split(
-      ":"
+    const bundlePath = path.join(
+      webpackDevExpressConfig.output.path,
+      webpackDevExpressConfig.output.filename
     );
-    app.use(
-      /^(\/static).*/,
-      proxy({ changeOrigin: true, target: `http://${host}:${port}` })
-    );
+
+    const file = mfs.readFileSync(bundlePath, "utf8");
+
+    const m = new module.constructor();
+
+    m._compile(file, webpackDevExpressConfig.output.filename);
+
+    bundle = m.exports.default;
+  });
+
+  app.use(
+    [/^(\/static).*/, /^(\/main\.).*/, /^(\/sockjs).*/, "/favicon.ico"],
+    proxy({ changeOrigin: true, target: `http://localhost:3000`, ws: true })
+  );
+
+  app.get("/", (req, res) => {
+    getTemplate().then(ret => {
+      const template = ret.data;
+      const indexPage = render({
+        template,
+        bundle
+      });
+
+      res.setHeader("Content-Type", "text/html");
+      res.send(indexPage);
+      res.end();
+    });
   });
 };

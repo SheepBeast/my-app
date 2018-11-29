@@ -1,35 +1,34 @@
-module.exports = function(callback) {
-  const http = require("http");
-  const express = require("express");
-  const webpackDevExpressConfig = require("../config/webpackDevExpress.config");
-  const setupDevSever = require("./dev-server");
+process.env.BABEL_ENV = "development";
+process.env.NODE_ENV = "development";
 
-  const app = express();
+const http = require("http");
+const express = require("express");
+const webpackDevExpressConfig = require("../config/webpackDevExpress.config");
+const setupDevSever = require("./dev-server");
 
-  app.use(require("morgan")("short"));
+const app = express();
 
-  app.use("/public", express.static(webpackDevExpressConfig.output.publicPath));
+app.use(require("morgan")("short"));
 
-  app.get("/", function(req, res) {
-    res.sendFile(__dirname + "/index.html");
-  });
+app.use("/public", express.static(webpackDevExpressConfig.output.publicPath));
 
-  if (process.env.NODE_ENV != "production") {
-    try {
-      setupDevSever(app);
-    } catch (e) {
-      console.error("setup dev server error -->", e);
-      process.exit(1);
-    }
+// app.get("/", function(req, res) {
+//   res.sendFile(__dirname + "/index.html");
+// });
+
+if (process.env.NODE_ENV != "production") {
+  try {
+    setupDevSever(app);
+  } catch (e) {
+    console.error("setup dev server error -->", e);
+    process.exit(1);
   }
+}
 
-  const server = http.createServer(app).listen(3001, "localhost", function() {
-    callback && callback();
+const server = http.createServer(app).listen(3001, "localhost", function() {
+  const { address, port } = server.address();
 
-    const { address, port } = server.address();
-
-    console.log(
-      `\nBackend server is listening on\n\n  http://${address}:${port}\n`
-    );
-  });
-};
+  console.log(
+    `\nBackend server is listening on\n\n  http://${address}:${port}\n`
+  );
+});

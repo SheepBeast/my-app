@@ -31,8 +31,6 @@ const paths = require("../config/paths");
 const config = require("../config/webpack.config.dev");
 const createDevServerConfig = require("../config/webpackDevServer.config");
 
-const { init } = require("../server/bind");
-const setupBackendServer = require("../server");
 
 const useYarn = fs.existsSync(paths.yarnLockFile);
 const isInteractive = process.stdout.isTTY;
@@ -100,9 +98,8 @@ checkBrowsers(paths.appPath, isInteractive)
         clearConsole();
       }
       console.log(chalk.cyan("Starting the development server...\n"));
-      // openBrowser(urls.localUrlForBrowser);
+      openBrowser(urls.localUrlForBrowser);
 
-      setupBackendServer();
     });
 
     ["SIGINT", "SIGTERM"].forEach(function(sig) {
@@ -112,7 +109,6 @@ checkBrowsers(paths.appPath, isInteractive)
       });
     });
 
-    init(compiler, devServer);
   })
   .catch(err => {
     if (err && err.message) {
