@@ -17,7 +17,6 @@ const ManifestPlugin = require("webpack-manifest-plugin");
 const ModuleNotFoundPlugin = require("react-dev-utils/ModuleNotFoundPlugin");
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin-alt");
 const typescriptFormatter = require("react-dev-utils/typescriptFormatter");
-const addition = require("./addition");
 
 // Webpack uses `publicPath` to determine where the app is being served from.
 // In development, we always serve from the root. This makes config easier.
@@ -372,7 +371,7 @@ module.exports = {
     // to their corresponding output file so that tools can pick it up without
     // having to parse `index.html`.
     new ManifestPlugin({
-      fileName: addition.manifest,
+      fileName: 'asset-manifest.json',
       publicPath: publicPath
     }),
     // TypeScript type checking
